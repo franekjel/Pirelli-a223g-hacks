@@ -26,5 +26,9 @@ flashimage 192.168.1.100:filename.img
 ```
 
 # Firmware
-1. Some version of orginal firmware
-2. Openwrt //TODO
+1. Original firmware form my IPS (Netia) is in this repo (openrg-4.5.3.DWVL_NET_FON_4.3.1.0046-DRG_A223G_96358.rmt). I can't do anything with it.
+2. Openwrt: It's possible to flash openwrt. You can use version for drg-a226g (which is mainlined, you can download it from opewrt site or build). I'am also working on version for a223g (dts file in this repo). Currently this is copy of a226g with some modifications mainly for this model leds (this means that about half of them is working (but this more important half)). With minimal openwrt (without luci etc.) device is pretty usable as emergency router. Since it has serial port and  gpio (for leds, also there is jtag and some places for pins (sysfs show 32 pins for gpiochip480, I will test them later)) it probably can be also some kind of SBC. NOTE: It may be necessary to change board signature to succesfully flash nad boot opewrt. In CFE bootloader use
+```
+b
+```
+to change board parameters (for signature there are 3 options, in my 0 work best (but I'm unsure why, so it may differ))
