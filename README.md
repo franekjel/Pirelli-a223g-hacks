@@ -1,34 +1,51 @@
-Pirelli DRG A223G is adsl modem and router with 32MB ram and bcm6358. Device have USB port and two 100mbit ethernet.
+Pirelli DRG A223G is adsl modem and router with 32MB ram and bcm6358. Device have USB port and two 100mbit ethernet. This file contains some investigations I made to make it usable (since I have plenty of them).
 
-# State
-With original firmware (by origninal I meany firmware I got with modem from my ISP, it probably differ) it is possible to use device only as adsl modem. My goal is to configure it as router (use one ethernet port as WAN). 
+## State
+With original firmware (by original I meany firmware I got with modem from my ISP, it probably depends on IPS and country) it is possible to use device only as adsl modem. I wanted to use it as an emergency router for travels etc.
 
-# Serial connection
+## Serial connection
 Board have serial port with enabled console:
-![UART pins](https://raw.githubusercontent.com/franekjel/Pirelli-a223g-hacks/master/IMG_20200223_183606.jpg)
+![UART pins](https://raw.githubusercontent.com/franekjel/Pirelli-a223g-hacks/master/uart.jpg)
+
 It is possible to connect with baud rate 11520.
-Then it is possible to stop boot on CFE bootloader (by pressing ESC on early booting) or to router firmware
 
-# Orginal router firmware
-Router use openrg as firmware, i couldn't log in or do anything
+By pressing ESC on early booting you can enter CFE bootloader.
 
-# CFE bootloader
-From CFE bootloader it is possible to flash new firmware. You need to download new firmware and place it in directory, then connect router to computer via ethernet, set static IP and start TFTP server. On linux:
+## CFE bootloader
+With CFE bootloader you can flash new firmware. You need start tftp sever in directory with firmware and connect computer to router eth0. Then you must set static ip and you can use:
 ```
-# ip address add 192.168.1.100/24 broadcast + dev enp12s0
-<plug cable>
-# dnsmasq -d --port=0 --enable-tftp --tftp-root=/directory/where/firmware/is
+flashimage <your static ip>:filename.img
 ```
-Of course you must use proper interface and directory (and you can choose other IP)
-Then on CFE:
-```
-flashimage 192.168.1.100:filename.img
-```
+to flash new firmware.
 
-# Firmware
-1. Original firmware form my IPS (Netia) is in this repo (openrg-4.5.3.DWVL_NET_FON_4.3.1.0046-DRG_A223G_96358.rmt). I can't do anything with it.
-2. Openwrt: It's possible to flash openwrt. You can use version for drg-a226g (which is mainlined, you can download it from opewrt site or build). I'am also working on version for a223g (dts file and image in this repo). Currently this is copy of a226g with some modifications mainly for this model leds (this means that about half of them is working (but this more important half)). With minimal openwrt (without luci etc.) device is pretty usable as emergency router. Since it has serial port and  gpio (for leds, also there is jtag and some places for pins (sysfs show 32 pins for gpiochip480, I will test them later)) it probably can be also some kind of SBC. NOTE: It may be necessary to change board signature to succesfully flash nad boot opewrt. In CFE bootloader use
+## Firmware
+#### Original firmware
+File ```openrg-4.5.3.DWVL_NET_FON_4.3.1.0046-DRG_A223G_96358.rmt``` is original firmware from my IPS (Netia). To flash it you must first strip from some metadata on the beginning. Real image starts with sequence (in hex):
 ```
-b
+38 00 00 00 50 69 72 65 6c 6c 69 42 53
 ```
-to change board parameters (for signature there are 3 options, in my 0 work best (but I'm unsure why, so it may differ))
+or (ASCII)
+```
+8...PirelliBS
+```
+in hexdump.
+![Hexdump of .rmt image](https://raw.githubusercontent.com/franekjel/Pirelli-a223g-hacks/master/uart.jpg)
+
+You need to remove all bytes before these, so (in case of image from this repo):
+```
+dd if=openrg-4.5.3.DWVL_NET_FON_4.3.1.0046-DRG_A223G_96358.rmt of=openrg.img bs=1 skip=166
+```
+Then it should be posibble to flash this image in CFE, as mentioned above.
+
+It should be possible to crack password for the root user using
+https://github.com/antnks/pirelli-decryptor
+but I didn't investigated this option furter. This firmware is old (2010), buggy (I encountered some segfaults and panics) and very limited, so I decided to try run openwrt instead.
+
+#### Openwrt.
+Openwrt supports bcm6358 so it's easy to port it. You can build mainline openwrt for Pirelli a226g - it's similar device, and it should work (I tried it and booted). You can also try .dst file I prepared for a223g in ```openwrt/``` folder in this repo. It handles leds a bit better.
+
+You can also try compiled image (```openwrt-bcm63xx-generic-pirelli_a223g-squashfs-cfe.bin```). It is compiled with files in ```openwrt\files\``` to use eth0 as wan and make open wifi named `pirelli-a223g`.
+
+## Troubleshooting
+
+If you run into a problem while flashing about an incompatible device you can try to change device parameters (board signature) in CFE using command ```b```. In my case it helped.
