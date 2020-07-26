@@ -29,7 +29,7 @@ or (ASCII)
 8...PirelliBS
 ```
 in hexdump.
-![Hexdump of .rmt image](https://raw.githubusercontent.com/franekjel/Pirelli-a223g-hacks/master/uart.jpg)
+![Hexdump of .rmt image](https://raw.githubusercontent.com/franekjel/Pirelli-a223g-hacks/master/firmware.png)
 
 You need to remove all bytes before these, so (in case of image from this repo):
 ```
